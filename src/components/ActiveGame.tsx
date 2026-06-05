@@ -252,33 +252,6 @@ export default function ActiveGame({
               {/* Current prompt only; the accumulated prompt history lives under Tilanne. */}
               <div className="space-y-4" id="chat-style-script-history">
                 {historyLogs.slice(-1).map((log) => {
-                  const idx = historyLogs.length - 1;
-                  const isLast = true;
-                  
-                  if (!isLast) {
-                    // Previous logs rendered beautifully in quiet collapsed state
-                    return (
-                      <div 
-                        key={log.promptId} 
-                        className="bg-stone-950/40 border border-stone-900 rounded-lg p-4 font-sans space-y-2 opacity-50 hover:opacity-100 transition-opacity"
-                      >
-                        <div className="flex justify-between items-center text-[10px] font-mono text-stone-600">
-                          <span>LAUSUTTU VUORO #{idx + 1}</span>
-                          <span>{new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                        </div>
-                        <blockquote className="text-[13px] text-stone-350 italic border-l-2 border-stone-850 pl-2 leading-relaxed">
-                          {log.spoken_prompt}
-                        </blockquote>
-                        {log.postfix && (
-                          <p className="text-[11px] text-stone-500 leading-normal">
-                            👉 {log.postfix}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  // The very last item in timeline (active segment or compiling state)
                   return (
                     <div key={log.promptId} className="space-y-4">
                       
