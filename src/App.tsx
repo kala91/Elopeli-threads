@@ -24,18 +24,22 @@ const INITIAL_THEME = {
   styleClasses: "border border-green-500/20 shadow-lg shadow-green-950/45 rounded-md"
 };
 
-// Generates persistent user device session client ID
+const GAME_CACHE_KEY = "elopeli_cached_game_id";
+const CHARACTER_CACHE_KEY = "elopeli_cached_char_id";
+const PLAYER_ID_KEY = "elopeli_player_id";
+
+// Generates one player identity per browser tab so local multiplayer can be tested in tabs.
 function getOrCreatePlayerId(): string {
-  let pid = localStorage.getItem("elopeli_player_id");
+  let pid = sessionStorage.getItem(PLAYER_ID_KEY);
   if (!pid) {
     pid = `usr_${Math.random().toString(36).substring(2, 9)}`;
-    localStorage.setItem("elopeli_player_id", pid);
+    sessionStorage.setItem(PLAYER_ID_KEY, pid);
   }
   return pid;
 }
 
 export default function App() {
-  const playerId = getOrCreatePlayerId();
+  const [playerId] = useState(getOrCreatePlayerId);
   
   const [page, setPage] = useState<"start" | "lobby" | "game">("start");
   const [gameId, setGameId] = useState<string>("");
@@ -83,8 +87,8 @@ export default function App() {
 
   // Attempt to restore persistent session on boot (for high usability on mobile interruptions)
   useEffect(() => {
-    const cachedGameId = localStorage.getItem("elopeli_cached_game_id");
-    const cachedCharId = localStorage.getItem("elopeli_cached_char_id");
+    const cachedGameId = sessionStorage.getItem(GAME_CACHE_KEY);
+    const cachedCharId = sessionStorage.getItem(CHARACTER_CACHE_KEY);
     if (cachedGameId) {
       setGameId(cachedGameId);
       if (cachedCharId) {
@@ -109,7 +113,7 @@ export default function App() {
       if (data.success && data.game_id) {
         setGameId(data.game_id);
         setGame(data.game);
-        localStorage.setItem("elopeli_cached_game_id", data.game_id);
+        sessionStorage.setItem(GAME_CACHE_KEY, data.game_id);
         setPage("lobby");
       } else {
         setError(data.error || "Scenario activation failed.");
@@ -138,7 +142,7 @@ export default function App() {
       setGame(checkData.game);
 
       localStorage.setItem("elopeli_player_name", playerName);
-      localStorage.setItem("elopeli_cached_game_id", targetGameId);
+      sessionStorage.setItem(GAME_CACHE_KEY, targetGameId);
 
       // Check if current player already has an active character registered
       const existingChar = Object.values(checkData.game.characters).find(
@@ -147,11 +151,11 @@ export default function App() {
 
       if (existingChar) {
         setCharacterId(existingChar.character_id);
-        localStorage.setItem("elopeli_cached_char_id", existingChar.character_id);
+        sessionStorage.setItem(CHARACTER_CACHE_KEY, existingChar.character_id);
         setPage("game");
       } else {
         setCharacterId("");
-        localStorage.removeItem("elopeli_cached_char_id");
+        sessionStorage.removeItem(CHARACTER_CACHE_KEY);
         setPage("lobby");
       }
     } catch (err: any) {
@@ -177,7 +181,7 @@ export default function App() {
       if (data.success && data.game) {
         setGame(data.game);
         setCharacterId(charId);
-        localStorage.setItem("elopeli_cached_char_id", charId);
+        sessionStorage.setItem(CHARACTER_CACHE_KEY, charId);
         setPage("game");
       } else {
         throw new Error(data.error || "Hahmon varaaminen epäonnistui.");
@@ -201,7 +205,7 @@ export default function App() {
       if (data.success && data.game) {
         setGame(data.game);
         setCharacterId("");
-        localStorage.removeItem("elopeli_cached_char_id");
+        sessionStorage.removeItem(CHARACTER_CACHE_KEY);
         setPage("lobby");
       } else {
         throw new Error(data.error || "Hahmon vapauttaminen epäonnistui.");
@@ -231,7 +235,7 @@ export default function App() {
       if (data.success && data.character_id && data.game) {
         setGame(data.game);
         setCharacterId(data.character_id);
-        localStorage.setItem("elopeli_cached_char_id", data.character_id);
+        sessionStorage.setItem(CHARACTER_CACHE_KEY, data.character_id);
         setPage("game");
       } else {
         throw new Error(data.error || "Muokatun hahmon luominen epäonnistui.");
@@ -287,8 +291,8 @@ export default function App() {
   };
 
   const handleLeaveGame = () => {
-    localStorage.removeItem("elopeli_cached_game_id");
-    localStorage.removeItem("elopeli_cached_char_id");
+    sessionStorage.removeItem(GAME_CACHE_KEY);
+    sessionStorage.removeItem(CHARACTER_CACHE_KEY);
     setGameId("");
     setCharacterId("");
     setGame(null);
