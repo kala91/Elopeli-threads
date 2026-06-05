@@ -50,10 +50,10 @@ export default function ActiveGame({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [historyLogs, setHistoryLogs] = useState<DramaLogItem[]>([]);
 
-  // Capture current prompts into local/localStorage chronological history logs
+  // Capture current prompts into localStorage chronological history logs.
   useEffect(() => {
     if (!character.character_id) return;
-    const cacheKey = `elopeli_history_log_${character.character_id}`;
+    const cacheKey = `elopeli_history_log_${gameId}_${character.character_id}`;
     const cached = localStorage.getItem(cacheKey);
     let loaded: DramaLogItem[] = cached ? JSON.parse(cached) : [];
     
@@ -81,7 +81,7 @@ export default function ActiveGame({
       }
     }
     setHistoryLogs(loaded);
-  }, [character.character_id, character.current_prompt]);
+  }, [character.character_id, character.current_prompt, gameId]);
 
   // Character Shell (Lataustila)
   if (character.status === "shell") {
@@ -242,17 +242,18 @@ export default function ActiveGame({
               {/* Title Header */}
               <div className="flex justify-between items-center px-1">
                 <span className="text-[10px] font-mono uppercase text-stone-500 tracking-wider">
-                  Käsikirjoitus / Roolihistoria ({historyLogs.length} vuoroa)
+                  Nykyinen tilanneprompti
                 </span>
                 <span className="text-[9px] bg-green-500/15 text-green-400 font-mono px-2 py-0.5 rounded uppercase font-semibold">
-                  Juokseva kerronta
+                  Aktiivinen vuoro
                 </span>
               </div>
 
-              {/* Chronological logs feed */}
+              {/* Current prompt only; the accumulated prompt history lives under Tilanne. */}
               <div className="space-y-4" id="chat-style-script-history">
-                {historyLogs.map((log, idx) => {
-                  const isLast = idx === historyLogs.length - 1;
+                {historyLogs.slice(-1).map((log) => {
+                  const idx = historyLogs.length - 1;
+                  const isLast = true;
                   
                   if (!isLast) {
                     // Previous logs rendered beautifully in quiet collapsed state
@@ -587,6 +588,38 @@ export default function ActiveGame({
                   <div key={grp.group_id} className="bg-stone-950 border border-stone-900 rounded p-2">
                     <span className="text-[11px] font-semibold text-white block truncate">{grp.name}</span>
                     <span className="text-[10px] text-stone-500 leading-normal line-clamp-2 mt-0.5">{grp.description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Player Prompt History moved from the main turn view to Tilanne. */}
+          {historyLogs.length > 1 && (
+            <div className="bg-game-card border border-stone-850 p-4 rounded-lg space-y-2 mt-2" id="character-prompt-history">
+              <h3 className="font-mono text-[11px] uppercase tracking-widest text-stone-500 flex items-center gap-1">
+                <MessageSquare size={12} /> Promptihistoria
+              </h3>
+              <div className="space-y-2">
+                {historyLogs.slice(0, -1).reverse().map((log, index) => (
+                  <div key={log.promptId} className="bg-stone-950 border border-stone-900 rounded p-3 text-xs leading-relaxed text-stone-400 font-sans space-y-1.5">
+                    <div className="flex justify-between gap-2 font-mono text-[10px] text-stone-600">
+                      <span>Vuoro {historyLogs.length - index - 1}</span>
+                      <span>{new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                    </div>
+                    <p className="text-stone-300 italic">{log.prefix}</p>
+                    {Array.isArray(log.spoken_prompt) ? (
+                      <ul className="list-disc pl-4 space-y-1">
+                        {log.spoken_prompt.map((step, stepIndex) => (
+                          <li key={stepIndex}>{step}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="font-semibold text-stone-200">{log.spoken_prompt}</p>
+                    )}
+                    {log.postfix && (
+                      <p className="text-stone-500">Odotus: {log.postfix}</p>
+                    )}
                   </div>
                 ))}
               </div>
