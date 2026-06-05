@@ -1,0 +1,6 @@
+{
+  "name": "Elopeli",
+  "description": "Scripted, atmospheric improvisation and roleplaying game platform powered by local Ollama models.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_OLLAMA_API"]
+}
